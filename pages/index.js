@@ -3,6 +3,7 @@ import { useState } from "react";
 export default function Home() {
   const [activeModule, setActiveModule] = useState("CRM Лиды");
   const [command, setCommand] = useState("");
+  const [isListening, setIsListening] = useState(false);
   const [messages, setMessages] = useState([
     {
       from: "jarvis",
@@ -60,44 +61,83 @@ export default function Home() {
     "Команда"
   ];
 
-  function runJarvis() {
-    if (!command.trim()) return;
+  function runJarvis(textFromVoice) {
+    const text = textFromVoice || command;
 
-    const userText = command;
+    if (!text.trim()) return;
+
+    const userText = text;
 
     let jarvisAnswer =
       "Принял команду. Сейчас я работаю в тестовом режиме. Следующий этап — подключение настоящего AI через API.";
 
-    if (userText.toLowerCase().includes("план")) {
+    const lowerText = userText.toLowerCase();
+
+    if (lowerText.includes("план")) {
       jarvisAnswer =
         "План на сегодня: 1) обработать новых лидов, 2) проверить финансы, 3) записать расходы, 4) сделать контент, 5) закрыть задачи по продажам.";
     }
 
-    if (userText.toLowerCase().includes("лид")) {
+    if (lowerText.includes("лид") || lowerText.includes("crm")) {
       jarvisAnswer =
         "Открываю CRM. Проверь новых клиентов, статус переговоров и следующий шаг по каждому лиду.";
       setActiveModule("CRM Лиды");
     }
 
-    if (userText.toLowerCase().includes("финанс")) {
+    if (lowerText.includes("финанс") || lowerText.includes("деньг")) {
       jarvisAnswer =
         "Открываю финансы. Проверь доходы, расходы, баланс и чистую прибыль.";
       setActiveModule("Финансы");
     }
 
-    if (userText.toLowerCase().includes("расход")) {
+    if (lowerText.includes("расход")) {
       jarvisAnswer =
         "Открываю финансы. Добавь расход по категории: реклама, аренда, зарплата, топливо, кредиты или прочее.";
       setActiveModule("Финансы");
     }
 
-    setMessages([
-      ...messages,
+    setMessages((prev) => [
+      ...prev,
       { from: "user", text: userText },
       { from: "jarvis", text: jarvisAnswer }
     ]);
 
     setCommand("");
+  }
+
+  function startVoice() {
+    const SpeechRecognition =
+      window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      alert("Голосовой ввод не поддерживается в этом браузере. Попробуй Google Chrome.");
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+
+    recognition.lang = "ru-RU";
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    setIsListening(true);
+
+    recognition.start();
+
+    recognition.onresult = (event) => {
+      const voiceText = event.results[0][0].transcript;
+      setCommand(voiceText);
+      runJarvis(voiceText);
+    };
+
+    recognition.onerror = () => {
+      alert("Не получилось распознать голос. Проверь доступ к микрофону.");
+      setIsListening(false);
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+    };
   }
 
   return (
@@ -109,7 +149,7 @@ export default function Home() {
       </p>
 
       <section style={jarvisBox}>
-        <h2 style={{ marginTop: 0 }}>🎙 Джарвейс Chat AI</h2>
+        <h2 style={{ marginTop: 0 }}>🎙 Голосовой Джарвейс</h2>
 
         <div style={chatBox}>
           {messages.map((msg, index) => (
@@ -132,19 +172,22 @@ export default function Home() {
         <input
           value={command}
           onChange={(e) => setCommand(e.target.value)}
-          placeholder="Введите команду для Джарвейса..."
+          placeholder="Введите команду или нажмите Говорить..."
           style={wideInputStyle}
         />
 
         <div style={{ display: "flex", gap: "12px", marginTop: "15px" }}>
-          <button style={buttonStyle}>Говорить</button>
-          <button onClick={runJarvis} style={buttonStyle}>
+          <button onClick={startVoice} style={buttonStyle}>
+            {isListening ? "Слушаю..." : "Говорить"}
+          </button>
+
+          <button onClick={() => runJarvis()} style={buttonStyle}>
             Выполнить
           </button>
         </div>
 
         <p style={{ color: "#10b981", marginTop: "15px" }}>
-          Статус: Джарвейс активен
+          Статус: {isListening ? "Джарвейс слушает команду" : "Джарвейс активен"}
         </p>
       </section>
 
