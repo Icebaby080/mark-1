@@ -61,48 +61,64 @@ export default function Home() {
     "Команда"
   ];
 
-  function runJarvis(textFromVoice) {
+  async function runJarvis(textFromVoice) {
     const text = textFromVoice || command;
 
     if (!text.trim()) return;
 
     const userText = text;
 
-    let jarvisAnswer =
-      "Принял команду. Сейчас я работаю в тестовом режиме. Следующий этап — подключение настоящего AI через API.";
-
-    const lowerText = userText.toLowerCase();
-
-    if (lowerText.includes("план")) {
-      jarvisAnswer =
-        "План на сегодня: 1) обработать новых лидов, 2) проверить финансы, 3) записать расходы, 4) сделать контент, 5) закрыть задачи по продажам.";
-    }
-
-    if (lowerText.includes("лид") || lowerText.includes("crm")) {
-      jarvisAnswer =
-        "Открываю CRM. Проверь новых клиентов, статус переговоров и следующий шаг по каждому лиду.";
-      setActiveModule("CRM Лиды");
-    }
-
-    if (lowerText.includes("финанс") || lowerText.includes("деньг")) {
-      jarvisAnswer =
-        "Открываю финансы. Проверь доходы, расходы, баланс и чистую прибыль.";
-      setActiveModule("Финансы");
-    }
-
-    if (lowerText.includes("расход")) {
-      jarvisAnswer =
-        "Открываю финансы. Добавь расход по категории: реклама, аренда, зарплата, топливо, кредиты или прочее.";
-      setActiveModule("Финансы");
-    }
-
     setMessages((prev) => [
       ...prev,
       { from: "user", text: userText },
-      { from: "jarvis", text: jarvisAnswer }
+      { from: "jarvis", text: "Думаю..." }
     ]);
 
     setCommand("");
+
+    try {
+      const response = await fetch("/api/jarvis", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ message: userText })
+      });
+
+      const data = await response.json();
+
+      setMessages((prev) => {
+        const updated = [...prev];
+        updated[updated.length - 1] = {
+          from: "jarvis",
+          text: data.answer || data.error || "Джарвейс не смог ответить."
+        };
+        return updated;
+      });
+
+      const lowerText = userText.toLowerCase();
+
+      if (lowerText.includes("лид") || lowerText.includes("crm")) {
+        setActiveModule("CRM Лиды");
+      }
+
+      if (
+        lowerText.includes("финанс") ||
+        lowerText.includes("деньг") ||
+        lowerText.includes("расход")
+      ) {
+        setActiveModule("Финансы");
+      }
+    } catch (error) {
+      setMessages((prev) => {
+        const updated = [...prev];
+        updated[updated.length - 1] = {
+          from: "jarvis",
+          text: "Ошибка подключения к мозгу Джарвейса."
+        };
+        return updated;
+      });
+    }
   }
 
   function startVoice() {
@@ -121,7 +137,6 @@ export default function Home() {
     recognition.maxAlternatives = 1;
 
     setIsListening(true);
-
     recognition.start();
 
     recognition.onresult = (event) => {
@@ -149,7 +164,7 @@ export default function Home() {
       </p>
 
       <section style={jarvisBox}>
-        <h2 style={{ marginTop: 0 }}>🎙 Голосовой Джарвейс</h2>
+        <h2 style={{ marginTop: 0 }}>🎙 AI Джарвейс</h2>
 
         <div style={chatBox}>
           {messages.map((msg, index) => (
@@ -187,7 +202,7 @@ export default function Home() {
         </div>
 
         <p style={{ color: "#10b981", marginTop: "15px" }}>
-          Статус: {isListening ? "Джарвейс слушает команду" : "Джарвейс активен"}
+          Статус: {isListening ? "Джарвейс слушает команду" : "AI-мозг активен"}
         </p>
       </section>
 
