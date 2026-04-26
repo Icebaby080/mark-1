@@ -1,43 +1,26 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { createClient } from "@supabase/supabase-js";
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+);
 
 export default function Home() {
   const [activeModule, setActiveModule] = useState("CRM Лиды");
   const [command, setCommand] = useState("");
   const [isListening, setIsListening] = useState(false);
   const [messages, setMessages] = useState([
-    {
-      from: "jarvis",
-      text: "Джарвейс активирован. Марк 1 готов к работе."
-    }
+    { from: "jarvis", text: "Джарвейс активирован. Марк 1 готов к работе." }
   ]);
 
-  const leads = [
-    {
-      name: "Клиент 1",
-      phone: "+7 777 000 00 00",
-      car: "Li L9",
-      status: "Новый лид",
-      next: "Позвонить"
-    },
-    {
-      name: "Клиент 2",
-      phone: "+7 700 000 00 00",
-      car: "Depal S07",
-      status: "Переговоры",
-      next: "Назначить встречу"
-    }
-  ];
-
-  const financeStats = [
-    { title: "Доход сегодня", value: "0 ₸" },
-    { title: "Доход месяца", value: "0 ₸" },
-    { title: "Расходы месяца", value: "0 ₸" },
-    { title: "Реклама", value: "0 ₸" },
-    { title: "Зарплаты", value: "0 ₸" },
-    { title: "Долги", value: "0 ₸" },
-    { title: "Баланс", value: "0 ₸" },
-    { title: "Чистая прибыль", value: "0 ₸" }
-  ];
+  const [financeRows, setFinanceRows] = useState([]);
+  const [incomeSource, setIncomeSource] = useState("");
+  const [incomeAmount, setIncomeAmount] = useState("");
+  const [incomeNote, setIncomeNote] = useState("");
+  const [expenseCategory, setExpenseCategory] = useState("Реклама");
+  const [expenseAmount, setExpenseAmount] = useState("");
+  const [expenseNote, setExpenseNote] = useState("");
 
   const expenseItems = [
     "Реклама",
@@ -61,9 +44,72 @@ export default function Home() {
     "Команда"
   ];
 
+  const leads = [
+    {
+      name: "Клиент 1",
+      phone: "+7 777 000 00 00",
+      car: "Li L9",
+      status: "Новый лид",
+      next: "Позвонить"
+    },
+    {
+      name: "Клиент 2",
+      phone: "+7 700 000 00 00",
+      car: "Depal S07",
+      status: "Переговоры",
+      next: "Назначить встречу"
+    }
+  ];
+
+  useEffect(() => {
+    loadFinances();
+  }, []);
+
+  async function loadFinances() {
+    const { data, error } = await supabase
+      .from("finances")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.log("Ошибка загрузки финансов:", error.message);
+      return;
+    }
+
+    setFinanceRows(data || []);
+  }
+
+  async function addFinance(type, category, amount, note) {
+    if (!amount || Number(amount) <= 0) {
+      alert("Введите сумму больше 0");
+      return;
+    }
+
+    const { error } = await supabase.from("finances").insert([
+      {
+        type,
+        category,
+        amount: Number(amount),
+        note
+      }
+    ]);
+
+    if (error) {
+      alert("Ошибка сохранения: " + error.message);
+      return;
+    }
+
+    await loadFinances();
+
+    setIncomeSource("");
+    setIncomeAmount("");
+    setIncomeNote("");
+    setExpenseAmount("");
+    setExpenseNote("");
+  }
+
   async function runJarvis(textFromVoice) {
     const text = textFromVoice || command;
-
     if (!text.trim()) return;
 
     const userText = text;
@@ -79,9 +125,7 @@ export default function Home() {
     try {
       const response = await fetch("/api/jarvis", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: userText })
       });
 
@@ -154,6 +198,23 @@ export default function Home() {
       setIsListening(false);
     };
   }
+
+  const totalIncome = financeRows
+    .filter((row) => row.type === "income")
+    .reduce((sum, row) => sum + Number(row.amount || 0), 0);
+
+  const totalExpense = financeRows
+    .filter((row) => row.type === "expense")
+    .reduce((sum, row) => sum + Number(row.amount || 0), 0);
+
+  const balance = totalIncome - totalExpense;
+
+  const financeStats = [
+    { title: "Доходы всего", value: `${totalIncome.toLocaleString()} ₸` },
+    { title: "Расходы всего", value: `${totalExpense.toLocaleString()} ₸` },
+    { title: "Баланс", value: `${balance.toLocaleString()} ₸` },
+    { title: "Записей", value: `${financeRows.length}` }
+  ];
 
   return (
     <main style={mainStyle}>
@@ -290,34 +351,94 @@ export default function Home() {
           <h3 style={{ marginTop: "30px" }}>Добавить доход</h3>
 
           <div style={formGrid}>
-            <input placeholder="Источник дохода" style={inputStyle} />
-            <input placeholder="Сумма" style={inputStyle} />
-            <input placeholder="Комментарий" style={inputStyle} />
-            <button style={buttonStyle}>Добавить доход</button>
+            <input
+              value={incomeSource}
+              onChange={(e) => setIncomeSource(e.target.value)}
+              placeholder="Источник дохода"
+              style={inputStyle}
+            />
+            <input
+              value={incomeAmount}
+              onChange={(e) => setIncomeAmount(e.target.value)}
+              placeholder="Сумма"
+              type="number"
+              style={inputStyle}
+            />
+            <input
+              value={incomeNote}
+              onChange={(e) => setIncomeNote(e.target.value)}
+              placeholder="Комментарий"
+              style={inputStyle}
+            />
+            <button
+              onClick={() =>
+                addFinance("income", incomeSource || "Доход", incomeAmount, incomeNote)
+              }
+              style={buttonStyle}
+            >
+              Добавить доход
+            </button>
           </div>
 
           <h3 style={{ marginTop: "30px" }}>Добавить расход</h3>
 
           <div style={formGrid}>
-            <select style={inputStyle}>
+            <select
+              value={expenseCategory}
+              onChange={(e) => setExpenseCategory(e.target.value)}
+              style={inputStyle}
+            >
               {expenseItems.map((item) => (
                 <option key={item}>{item}</option>
               ))}
             </select>
-            <input placeholder="Сумма расхода" style={inputStyle} />
-            <input placeholder="Комментарий" style={inputStyle} />
-            <button style={buttonStyle}>Добавить расход</button>
+            <input
+              value={expenseAmount}
+              onChange={(e) => setExpenseAmount(e.target.value)}
+              placeholder="Сумма расхода"
+              type="number"
+              style={inputStyle}
+            />
+            <input
+              value={expenseNote}
+              onChange={(e) => setExpenseNote(e.target.value)}
+              placeholder="Комментарий"
+              style={inputStyle}
+            />
+            <button
+              onClick={() =>
+                addFinance("expense", expenseCategory, expenseAmount, expenseNote)
+              }
+              style={buttonStyle}
+            >
+              Добавить расход
+            </button>
           </div>
 
-          <h3 style={{ marginTop: "30px" }}>Статьи расходов</h3>
+          <h3 style={{ marginTop: "30px" }}>История финансов</h3>
 
-          <section style={expenseGrid}>
-            {expenseItems.map((item) => (
-              <div key={item} style={expenseCard}>
-                {item}
-              </div>
-            ))}
-          </section>
+          <table style={tableStyle}>
+            <thead>
+              <tr>
+                <th style={thStyle}>Тип</th>
+                <th style={thStyle}>Категория</th>
+                <th style={thStyle}>Сумма</th>
+                <th style={thStyle}>Комментарий</th>
+              </tr>
+            </thead>
+            <tbody>
+              {financeRows.map((row) => (
+                <tr key={row.id}>
+                  <td style={tdStyle}>
+                    {row.type === "income" ? "Доход" : "Расход"}
+                  </td>
+                  <td style={tdStyle}>{row.category}</td>
+                  <td style={tdStyle}>{Number(row.amount).toLocaleString()} ₸</td>
+                  <td style={tdStyle}>{row.note}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </section>
       )}
     </main>
@@ -401,19 +522,6 @@ const financeGrid = {
 const financeCard = {
   padding: "22px",
   borderRadius: "18px",
-  background: "rgba(255,255,255,0.07)",
-  border: "1px solid rgba(255,255,255,0.10)"
-};
-
-const expenseGrid = {
-  display: "grid",
-  gridTemplateColumns: "repeat(auto-fit,minmax(170px,1fr))",
-  gap: "14px"
-};
-
-const expenseCard = {
-  padding: "18px",
-  borderRadius: "16px",
   background: "rgba(255,255,255,0.07)",
   border: "1px solid rgba(255,255,255,0.10)"
 };
