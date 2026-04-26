@@ -2,6 +2,13 @@ import { useState } from "react";
 
 export default function Home() {
   const [activeModule, setActiveModule] = useState("CRM Лиды");
+  const [command, setCommand] = useState("");
+  const [messages, setMessages] = useState([
+    {
+      from: "jarvis",
+      text: "Джарвейс активирован. Марк 1 готов к работе."
+    }
+  ]);
 
   const leads = [
     {
@@ -53,6 +60,46 @@ export default function Home() {
     "Команда"
   ];
 
+  function runJarvis() {
+    if (!command.trim()) return;
+
+    const userText = command;
+
+    let jarvisAnswer =
+      "Принял команду. Сейчас я работаю в тестовом режиме. Следующий этап — подключение настоящего AI через API.";
+
+    if (userText.toLowerCase().includes("план")) {
+      jarvisAnswer =
+        "План на сегодня: 1) обработать новых лидов, 2) проверить финансы, 3) записать расходы, 4) сделать контент, 5) закрыть задачи по продажам.";
+    }
+
+    if (userText.toLowerCase().includes("лид")) {
+      jarvisAnswer =
+        "Открываю CRM. Проверь новых клиентов, статус переговоров и следующий шаг по каждому лиду.";
+      setActiveModule("CRM Лиды");
+    }
+
+    if (userText.toLowerCase().includes("финанс")) {
+      jarvisAnswer =
+        "Открываю финансы. Проверь доходы, расходы, баланс и чистую прибыль.";
+      setActiveModule("Финансы");
+    }
+
+    if (userText.toLowerCase().includes("расход")) {
+      jarvisAnswer =
+        "Открываю финансы. Добавь расход по категории: реклама, аренда, зарплата, топливо, кредиты или прочее.";
+      setActiveModule("Финансы");
+    }
+
+    setMessages([
+      ...messages,
+      { from: "user", text: userText },
+      { from: "jarvis", text: jarvisAnswer }
+    ]);
+
+    setCommand("");
+  }
+
   return (
     <main style={mainStyle}>
       <h1 style={{ fontSize: "58px", marginBottom: "5px" }}>MARK 1</h1>
@@ -62,17 +109,42 @@ export default function Home() {
       </p>
 
       <section style={jarvisBox}>
-        <h2 style={{ marginTop: 0 }}>🎙 Джарвейс</h2>
+        <h2 style={{ marginTop: 0 }}>🎙 Джарвейс Chat AI</h2>
 
-        <input placeholder="Введите команду..." style={wideInputStyle} />
+        <div style={chatBox}>
+          {messages.map((msg, index) => (
+            <div
+              key={index}
+              style={{
+                ...messageBubble,
+                alignSelf: msg.from === "user" ? "flex-end" : "flex-start",
+                background:
+                  msg.from === "user"
+                    ? "rgba(59,130,246,0.35)"
+                    : "rgba(255,255,255,0.08)"
+              }}
+            >
+              <b>{msg.from === "user" ? "Ты" : "Джарвейс"}:</b> {msg.text}
+            </div>
+          ))}
+        </div>
+
+        <input
+          value={command}
+          onChange={(e) => setCommand(e.target.value)}
+          placeholder="Введите команду для Джарвейса..."
+          style={wideInputStyle}
+        />
 
         <div style={{ display: "flex", gap: "12px", marginTop: "15px" }}>
           <button style={buttonStyle}>Говорить</button>
-          <button style={buttonStyle}>Выполнить</button>
+          <button onClick={runJarvis} style={buttonStyle}>
+            Выполнить
+          </button>
         </div>
 
         <p style={{ color: "#10b981", marginTop: "15px" }}>
-          Статус: система активна
+          Статус: Джарвейс активен
         </p>
       </section>
 
@@ -208,6 +280,26 @@ const jarvisBox = {
   borderRadius: "22px",
   background: "rgba(255,255,255,0.06)",
   border: "1px solid rgba(255,255,255,0.12)"
+};
+
+const chatBox = {
+  minHeight: "160px",
+  maxHeight: "260px",
+  overflowY: "auto",
+  display: "flex",
+  flexDirection: "column",
+  gap: "10px",
+  padding: "15px",
+  borderRadius: "16px",
+  background: "rgba(0,0,0,0.25)",
+  marginBottom: "15px"
+};
+
+const messageBubble = {
+  padding: "12px 14px",
+  borderRadius: "14px",
+  maxWidth: "80%",
+  lineHeight: "1.5"
 };
 
 const moduleGrid = {
