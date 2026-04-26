@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 export default function Home() {
-  const [activeModule, setActiveModule] = useState("dashboard");
+  const [activeModule, setActiveModule] = useState("CRM Лиды");
 
   const leads = [
     {
@@ -20,6 +20,28 @@ export default function Home() {
     }
   ];
 
+  const financeStats = [
+    { title: "Доход сегодня", value: "0 ₸" },
+    { title: "Доход месяца", value: "0 ₸" },
+    { title: "Расходы месяца", value: "0 ₸" },
+    { title: "Реклама", value: "0 ₸" },
+    { title: "Зарплаты", value: "0 ₸" },
+    { title: "Долги", value: "0 ₸" },
+    { title: "Баланс", value: "0 ₸" },
+    { title: "Чистая прибыль", value: "0 ₸" }
+  ];
+
+  const expenseItems = [
+    "Реклама",
+    "Аренда",
+    "Зарплата",
+    "Топливо",
+    "Кредиты",
+    "Личные расходы",
+    "Офис",
+    "Прочее"
+  ];
+
   const modules = [
     "CRM Лиды",
     "Продажи",
@@ -32,39 +54,17 @@ export default function Home() {
   ];
 
   return (
-    <main style={{
-      minHeight: "100vh",
-      background: "linear-gradient(135deg,#030712,#0f172a,#111827)",
-      color: "white",
-      fontFamily: "Arial, sans-serif",
-      padding: "30px"
-    }}>
+    <main style={mainStyle}>
       <h1 style={{ fontSize: "58px", marginBottom: "5px" }}>MARK 1</h1>
 
       <p style={{ color: "#9ca3af", fontSize: "18px" }}>
         Stark System • Джарвейс управляет системой
       </p>
 
-      <section style={{
-        marginTop: "30px",
-        padding: "25px",
-        borderRadius: "22px",
-        background: "rgba(255,255,255,0.06)",
-        border: "1px solid rgba(255,255,255,0.12)"
-      }}>
+      <section style={jarvisBox}>
         <h2 style={{ marginTop: 0 }}>🎙 Джарвейс</h2>
 
-        <input
-          placeholder="Введите команду..."
-          style={{
-            width: "100%",
-            padding: "16px",
-            borderRadius: "14px",
-            border: "none",
-            marginTop: "10px",
-            fontSize: "16px"
-          }}
-        />
+        <input placeholder="Введите команду..." style={wideInputStyle} />
 
         <div style={{ display: "flex", gap: "12px", marginTop: "15px" }}>
           <button style={buttonStyle}>Говорить</button>
@@ -78,27 +78,17 @@ export default function Home() {
 
       <h2 style={{ marginTop: "35px" }}>📊 Бизнес Панель</h2>
 
-      <section style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))",
-        gap: "18px",
-        marginTop: "15px"
-      }}>
+      <section style={moduleGrid}>
         {modules.map((item) => (
           <button
             key={item}
             onClick={() => setActiveModule(item)}
             style={{
-              padding: "24px",
-              borderRadius: "18px",
-              background: activeModule === item
-                ? "rgba(59,130,246,0.35)"
-                : "rgba(255,255,255,0.07)",
-              border: "1px solid rgba(255,255,255,0.10)",
-              fontSize: "22px",
-              color: "white",
-              textAlign: "left",
-              cursor: "pointer"
+              ...moduleButton,
+              background:
+                activeModule === item
+                  ? "rgba(59,130,246,0.35)"
+                  : "rgba(255,255,255,0.07)"
             }}
           >
             {item}
@@ -110,12 +100,7 @@ export default function Home() {
         <section style={moduleBox}>
           <h2>CRM Лиды</h2>
 
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit,minmax(180px,1fr))",
-            gap: "12px",
-            marginBottom: "20px"
-          }}>
+          <div style={formGrid}>
             <input placeholder="Имя клиента" style={inputStyle} />
             <input placeholder="Телефон" style={inputStyle} />
             <input placeholder="Машина" style={inputStyle} />
@@ -132,41 +117,156 @@ export default function Home() {
             <button style={buttonStyle}>Добавить лида</button>
           </div>
 
-          <div style={{ overflowX: "auto" }}>
-            <table style={{
-              width: "100%",
-              borderCollapse: "collapse",
-              background: "rgba(255,255,255,0.04)",
-              borderRadius: "16px",
-              overflow: "hidden"
-            }}>
-              <thead>
-                <tr>
-                  <th style={thStyle}>Имя</th>
-                  <th style={thStyle}>Телефон</th>
-                  <th style={thStyle}>Авто</th>
-                  <th style={thStyle}>Статус</th>
-                  <th style={thStyle}>Следующий шаг</th>
+          <table style={tableStyle}>
+            <thead>
+              <tr>
+                <th style={thStyle}>Имя</th>
+                <th style={thStyle}>Телефон</th>
+                <th style={thStyle}>Авто</th>
+                <th style={thStyle}>Статус</th>
+                <th style={thStyle}>Следующий шаг</th>
+              </tr>
+            </thead>
+            <tbody>
+              {leads.map((lead, index) => (
+                <tr key={index}>
+                  <td style={tdStyle}>{lead.name}</td>
+                  <td style={tdStyle}>{lead.phone}</td>
+                  <td style={tdStyle}>{lead.car}</td>
+                  <td style={tdStyle}>{lead.status}</td>
+                  <td style={tdStyle}>{lead.next}</td>
                 </tr>
-              </thead>
-              <tbody>
-                {leads.map((lead, index) => (
-                  <tr key={index}>
-                    <td style={tdStyle}>{lead.name}</td>
-                    <td style={tdStyle}>{lead.phone}</td>
-                    <td style={tdStyle}>{lead.car}</td>
-                    <td style={tdStyle}>{lead.status}</td>
-                    <td style={tdStyle}>{lead.next}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+              ))}
+            </tbody>
+          </table>
+        </section>
+      )}
+
+      {activeModule === "Финансы" && (
+        <section style={moduleBox}>
+          <h2>Финансы</h2>
+
+          <section style={financeGrid}>
+            {financeStats.map((item) => (
+              <div key={item.title} style={financeCard}>
+                <p style={{ color: "#9ca3af", margin: 0 }}>{item.title}</p>
+                <h3 style={{ fontSize: "28px", margin: "10px 0 0" }}>
+                  {item.value}
+                </h3>
+              </div>
+            ))}
+          </section>
+
+          <h3 style={{ marginTop: "30px" }}>Добавить доход</h3>
+
+          <div style={formGrid}>
+            <input placeholder="Источник дохода" style={inputStyle} />
+            <input placeholder="Сумма" style={inputStyle} />
+            <input placeholder="Комментарий" style={inputStyle} />
+            <button style={buttonStyle}>Добавить доход</button>
           </div>
+
+          <h3 style={{ marginTop: "30px" }}>Добавить расход</h3>
+
+          <div style={formGrid}>
+            <select style={inputStyle}>
+              {expenseItems.map((item) => (
+                <option key={item}>{item}</option>
+              ))}
+            </select>
+            <input placeholder="Сумма расхода" style={inputStyle} />
+            <input placeholder="Комментарий" style={inputStyle} />
+            <button style={buttonStyle}>Добавить расход</button>
+          </div>
+
+          <h3 style={{ marginTop: "30px" }}>Статьи расходов</h3>
+
+          <section style={expenseGrid}>
+            {expenseItems.map((item) => (
+              <div key={item} style={expenseCard}>
+                {item}
+              </div>
+            ))}
+          </section>
         </section>
       )}
     </main>
   );
 }
+
+const mainStyle = {
+  minHeight: "100vh",
+  background: "linear-gradient(135deg,#030712,#0f172a,#111827)",
+  color: "white",
+  fontFamily: "Arial, sans-serif",
+  padding: "30px"
+};
+
+const jarvisBox = {
+  marginTop: "30px",
+  padding: "25px",
+  borderRadius: "22px",
+  background: "rgba(255,255,255,0.06)",
+  border: "1px solid rgba(255,255,255,0.12)"
+};
+
+const moduleGrid = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))",
+  gap: "18px",
+  marginTop: "15px"
+};
+
+const moduleButton = {
+  padding: "24px",
+  borderRadius: "18px",
+  border: "1px solid rgba(255,255,255,0.10)",
+  fontSize: "22px",
+  color: "white",
+  textAlign: "left",
+  cursor: "pointer"
+};
+
+const moduleBox = {
+  marginTop: "30px",
+  padding: "25px",
+  borderRadius: "22px",
+  background: "rgba(255,255,255,0.06)",
+  border: "1px solid rgba(255,255,255,0.12)"
+};
+
+const formGrid = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit,minmax(180px,1fr))",
+  gap: "12px",
+  marginBottom: "20px"
+};
+
+const financeGrid = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit,minmax(210px,1fr))",
+  gap: "16px"
+};
+
+const financeCard = {
+  padding: "22px",
+  borderRadius: "18px",
+  background: "rgba(255,255,255,0.07)",
+  border: "1px solid rgba(255,255,255,0.10)"
+};
+
+const expenseGrid = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit,minmax(170px,1fr))",
+  gap: "14px"
+};
+
+const expenseCard = {
+  padding: "18px",
+  borderRadius: "16px",
+  background: "rgba(255,255,255,0.07)",
+  border: "1px solid rgba(255,255,255,0.10)"
+};
 
 const buttonStyle = {
   padding: "14px 22px",
@@ -185,12 +285,21 @@ const inputStyle = {
   fontSize: "15px"
 };
 
-const moduleBox = {
-  marginTop: "30px",
-  padding: "25px",
-  borderRadius: "22px",
-  background: "rgba(255,255,255,0.06)",
-  border: "1px solid rgba(255,255,255,0.12)"
+const wideInputStyle = {
+  width: "100%",
+  padding: "16px",
+  borderRadius: "14px",
+  border: "none",
+  marginTop: "10px",
+  fontSize: "16px"
+};
+
+const tableStyle = {
+  width: "100%",
+  borderCollapse: "collapse",
+  background: "rgba(255,255,255,0.04)",
+  borderRadius: "16px",
+  overflow: "hidden"
 };
 
 const thStyle = {
